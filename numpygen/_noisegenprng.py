@@ -151,7 +151,7 @@ def get_seeded_conditions_d2m1n3(truechunk, k, c):
 
 
 
-def get_seeded_conditions(truechunk, k, c):
+def get_seeded_conditions(base_seed, truechunk, k, c):
     """This function (along with _set_seeded_condition) is used in order to
     guaranty that the produced data will always be the same for a given position
     in space and for a given seed.
@@ -165,7 +165,7 @@ def get_seeded_conditions(truechunk, k, c):
     l,t = truechunk
     prng = RandomState([l,t,n,0]) #bulk
     tabh,tabf,tabg = RandArrayPrng(h,n+1,prng),RandArrayPrng(p,n+1,prng),RandArrayPrng(p,n+1,prng)
-    _set_seeded_condition(l,t,tabh,n,h,1,c.WORLD_SIZE)
+    _set_seeded_condition(base_seed, l,t,tabh,n,h,1,c.WORLD_SIZE)
     return tabh, tabf, tabg
 
 def generate_terrain(chunk, c):
@@ -256,7 +256,7 @@ class PolynomZG: #zero-gradient D2M1N3 polynom (see article)
         y0 *= res
         a[x0:x0+res,y0:y0+res] += self.domain_eval(c, k)
 
-class PolynomGeneric(PolynomZG):
+class PolynomNoiseCache(PolynomZG):
 
     def __init__(self, h, f, g):
         A = h[0,1] + h[1,0] - h[0,0] - h[1,1]
@@ -432,9 +432,9 @@ class ZeroGradient(Cache):
             self.SMOOTHSTEP_Y.append(sy)
             self.XY.append(x*y - y*sx - x*sy)
 
-class Generic(Cache):
-    name = "Generic D2M1N3 cache"
-    polynom = PolynomGeneric
+class NoiseCache(Cache):
+    name = "NoiseCache D2M1N3 cache"
+    polynom = PolynomNoiseCache
 
     def __init__(self):
         Cache.__init__(self)

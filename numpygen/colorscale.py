@@ -1,8 +1,12 @@
+from typing import List, Tuple
+color_t = Tuple[int,int,int]
 import numpy as np
 
 class ColorScale: #tricky structure to obtain fast colormap from heightmap
 
-    def __init__(self, colors, minval=0.):
+    def __init__(self,
+                 colors:List[Tuple[str, color_t, color_t, float]],
+                 minval=0.):
         self.colors = colors #list of tuples on the form [(name, color1, color2, height), ...]
         self.materials = {}
         for i in range(len(self.colors)):

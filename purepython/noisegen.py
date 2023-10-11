@@ -3,6 +3,9 @@
 no dependency, for Python2 and Python3."""
 from __future__ import print_function, division
 import random, math
+from typing import Optional, Tuple, List, Dict
+
+hmap_type = List[List[float]]
 
 try:
     import pygame
@@ -11,14 +14,15 @@ except:
     print("Could not import pygame. build_surface function won't work.")
 
 
-#cache variables (not necessary used)
+#cache variables (not necessarily used)
+caches:Dict[Tuple[int,int], Tuple[List,List,List]] = {}
 
-caches = {}
 SMOOTH, DTERM, IDX, S = None, None, None, None
 
-
-
-def generate_terrain(size, n_octaves=None, chunk=(0,0), persistance=2.):
+def generate_terrain(size:int,
+                     n_octaves:Optional[int]=None,
+                     chunk:Tuple[int,int]=(0,0),
+                     persistance:float=2.)->hmap_type:
     """
     Returns a <size> times <size> array of heigth values for <n_octaves>, using
     <chunk> as seed.
@@ -72,7 +76,10 @@ def generate_terrain(size, n_octaves=None, chunk=(0,0), persistance=2.):
         amplitude /= persistance
     return terrain
 
-def generate_terrain_cache(size, n_octaves=None, chunk=(0,0), persistance=2.):
+def generate_terrain_cache(size:int,
+                            n_octaves:Optional[int]=None,
+                            chunk:Tuple[int,int]=(0,0),
+                            persistance:float=2.)->hmap_type:
     """
     Returns a <S> times <S> array of heigth values for <n_octaves>, using
     <mapcoord> as seed.
@@ -126,8 +133,9 @@ def generate_terrain_cache(size, n_octaves=None, chunk=(0,0), persistance=2.):
         amplitude /= persistance
     return terrain
 
-def pix(x,y,n_octaves,h,persistance):
-    """Used for local terrain generation, as in generate_terrain_local."""
+def pix(x:int,y:int,n_octaves:int,persistance:float)->float:
+    """Return the height value at one given coord (or pixel).
+    Used for local terrain generation, as in generate_terrain_local."""
     h = 0.
     amplitude = persistance
     # res = int(S)
@@ -152,15 +160,18 @@ def pix(x,y,n_octaves,h,persistance):
         amplitude /= persistance
     return h
 
-def generate_terrain_local(size, n_octaves=None, chunk=(0,0), persistance=2.):
+def generate_terrain_local(size:int,
+                            n_octaves:Optional[int]=None,
+                            chunk:Tuple[int,int]=(0,0),
+                            persistance:float=2.)->hmap_type:
     """
     Returns a <S> times <S> array of heigth values for <n_octaves>, using
     <chunk> as seed.
 
     Makes use of cached values.
 
-    This function is ~2x slower for large terrains, but faster when only a
-    fraction of the terrain need to be generated.
+    This function is ~2x slower for large terrains, but can be much faster when only a
+    fraction of the terrain needs to be generated.
     """
     global S
     global SMOOTH, DTERM, IDX
@@ -168,17 +179,20 @@ def generate_terrain_local(size, n_octaves=None, chunk=(0,0), persistance=2.):
     if n_octaves is None:
         n_octaves = int(math.log(S,2))
     SMOOTH, DTERM, IDX = get_cache(n_octaves, S)
-    h, min_res = _gen_hmap(n_octaves, S, chunk)
+    # h, min_res = _gen_hmap(n_octaves, S, chunk)
     terrain = [[0. for x in range(S)] for y in range(S)]
     for x in range(S): #here x is coord of pixel
         for y in range(S):
-            terrain[x][y] = pix(x,y,n_octaves,h,persistance)
+            terrain[x][y] = pix(x,y,n_octaves,persistance)
     return terrain
 
 
+color_t = Tuple[int,int,int]
 class ColorScale: #tricky structure to obtain fast colormap from heightmap
 
-    def __init__(self, colors, minval=0., default=None):
+    def __init__(self,
+                 colors=List[Tuple[color_t, color_t, float]],
+                 minval:float=0.)->None:
         """<colors> is on the form (c1,c2,maxval)."""
         self.colors = colors
         for i in range(len(self.colors)):
@@ -189,7 +203,8 @@ class ColorScale: #tricky structure to obtain fast colormap from heightmap
             self.colors[i] = [c1,c2,minval,maxval,delta]
         self.default = self.colors[0][0]
 
-    def get(self, h):
+    def get(self, h:float)->color_t:
+        """Returns the color corresponding to height <h>."""
         for c1, c2, m, M, delta in self.colors:
             if m <= h <= M:
                 factor = (h-m)/delta
@@ -237,7 +252,7 @@ def _gen_hmap(n_octaves, S, chunk):
     return h, min_res
 
 
-def get_cache(n_octaves, S):
+def get_cache(n_octaves:int, S:int)->Tuple[List,List,List]:
     """Build cache that is used by some terrain generation functions."""
     if (n_octaves, S) in caches:
         return caches[(n_octaves,S)]
@@ -285,6 +300,7 @@ def normalize(terrain):
         for y in range(S):
             terrain[x][y] = (terrain[x][y] - m)/(M-m)
     return terrain
+
 
 
 def build_surface(terrain, colorscale):
