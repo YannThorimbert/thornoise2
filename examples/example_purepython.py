@@ -33,6 +33,7 @@ if __name__ == "__main__":
                                     n_octaves=8, #depth or number of octaves (level of detail)
                                     chunk=(0,0), # chunk that is generated (NB : chunks are tilables)
                                     #NB2 : chunk is also used as a seed here
+                                    world_size=1000, #if world_size = 1, we get a seamless texture 
                                     persistence=2.) #parameter (play with it)
     ng.normalize(terrain)
     ##### Optional: visualization using pygame ##################################

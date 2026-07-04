@@ -21,6 +21,7 @@ SMOOTH, DTERM, IDX, S = None, None, None, None
 def generate_terrain(size:int,
                      n_octaves:None|int=None,
                      chunk:tuple[int,int]=(0,0),
+                     world_size=None,
                      persistence:float=2.)->hmap_type:
     """
     Returns a <size> times <size> array of heigth values for <n_octaves>, using
@@ -29,7 +30,7 @@ def generate_terrain(size:int,
     S = size
     if n_octaves is None:
         n_octaves = int(math.log(S,2))
-    h, min_res = _gen_hmap(n_octaves, S, chunk)
+    h, min_res = _gen_hmap(n_octaves, S, chunk, world_size)
     terrain = [[0. for x in range(S)] for y in range(S)]
     res = int(S)
     step = res//min_res
@@ -47,6 +48,11 @@ def generate_terrain(size:int,
                 smoothy = 3.*y2 - 2.*y_rel*y2
                 diag_term = x_rel*y_rel - smoothx*y_rel - smoothy*x_rel
                 if change_cell:
+                    # idx0 = (int(x / res) * step) % S
+                    # idy0 = (int(y / res) * step) % S
+                    # idx1 = (idx0 + step) % S
+                    # idy1 = (idy0 + step) % S
+                    #######
                     idx0, idy0 = int(x/res)*step, int(y/res)*step
                     idx1, idy1 = idx0+step, idy0+step
                     h00 = h[idx0][idy0]
@@ -215,41 +221,65 @@ class ColorScale: #tricky structure to obtain fast colormap from heightmap
         return self.default
 
 
-def _gen_hmap(n_octaves, S, chunk):
-    """Generate random hmap used by terrain generation.
-    THIS IS NOT THE ACTUAL TERRAIN GENERATION FUNCTION."""
-    min_res = int(S / 2**(n_octaves-1))
-    hmap_size = S//min_res + 1
-    random.seed(hash(chunk))
-    h = [[random.random() for x in range(hmap_size)] for y in range(hmap_size)]
-    #
+def _gen_hmap(n_octaves, S, chunk, world_size=None):
+    """
+    Generate random hmap used by terrain generation.
+
+    If world_size is not None, chunk coordinates are wrapped modulo world_size.
+    This makes the world periodic over world_size chunks.
+
+    world_size = 1 gives a single seamless chunk.
+    """
+    min_res = int(S / 2**(n_octaves - 1))
+    hmap_size = S // min_res + 1
+
     XCOORD, YCOORD = chunk
-    #left
-    random.seed(hash((XCOORD, YCOORD)))
+
+    def wrap_coord(x, y):
+        if world_size is None:
+            return x, y
+        return x % world_size, y % world_size
+
+    h = [
+        [random.random() for y in range(hmap_size)]
+        for x in range(hmap_size)
+    ]
+
+    # left
+    random.seed(hash(wrap_coord(XCOORD, YCOORD)))
     for y in range(hmap_size):
         h[0][y] = random.random()
-    #right
-    random.seed(hash((XCOORD + 1, YCOORD)))
+
+    # right
+    random.seed(hash(wrap_coord(XCOORD + 1, YCOORD)))
     for y in range(hmap_size):
         h[-1][y] = random.random()
-    #top
-    random.seed(hash((XCOORD, YCOORD)))
+
+    # top
+    random.seed(hash(wrap_coord(XCOORD, YCOORD)))
     for x in range(hmap_size):
         h[x][0] = random.random()
-    #bottom
-    random.seed(hash((XCOORD, YCOORD + 1)))
+
+    # bottom
+    random.seed(hash(wrap_coord(XCOORD, YCOORD + 1)))
     for x in range(hmap_size):
         h[x][-1] = random.random()
-    #corners
-    random.seed(hash((XCOORD, YCOORD)))
+
+    # corners
+    random.seed(hash(wrap_coord(XCOORD, YCOORD)))
     h[0][0] = random.random()
-    random.seed(hash((XCOORD + 1, YCOORD + 1)))
+
+    random.seed(hash(wrap_coord(XCOORD + 1, YCOORD + 1)))
     h[-1][-1] = random.random()
-    random.seed(hash((XCOORD, YCOORD + 1)))
+
+    random.seed(hash(wrap_coord(XCOORD, YCOORD + 1)))
     h[0][-1] = random.random()
-    random.seed(hash((XCOORD + 1, YCOORD)))
+
+    random.seed(hash(wrap_coord(XCOORD + 1, YCOORD)))
     h[-1][0] = random.random()
+
     return h, min_res
+
 
 
 def get_cache(n_octaves:int, S:int)->tuple[list,list,list]:
