@@ -4,8 +4,16 @@
 usage : run the following command from the parent folder of the package:
 'python -m thornoise2.examples.example_purepython'
 """
-import random
-from ..purepython import noisegen as ng
+import os
+import sys
+
+if __package__ in {None, ""}:
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+if __package__:
+    from ..purepython import noisegen as ng
+else:
+    from purepython import noisegen as ng
 
 if __name__ == "__main__":
     ######## Define a colorscale #######################################################
@@ -25,7 +33,7 @@ if __name__ == "__main__":
                                     n_octaves=8, #depth or number of octaves (level of detail)
                                     chunk=(0,0), # chunk that is generated (NB : chunks are tilables)
                                     #NB2 : chunk is also used as a seed here
-                                    persistance=2.) #parameter (play with it)
+                                    persistence=2.) #parameter (play with it)
     ng.normalize(terrain)
     ##### Optional: visualization using pygame ##################################
     HAS_PYGAME = False

@@ -13,10 +13,20 @@ usage : run the following command from the parent folder of the package:
 # Faire marcher seed. Note sur prng. typing
 # vendredi 14h45 rue de lyon
 
+import os
+import sys
+
 import numpy as np
 
-from ..numpygen import colorscale #type:ignore
-from ..numpygen import noisegen as ng
+if __package__ in {None, ""}:
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+if __package__:
+    from ..numpygen import colorscale #type:ignore
+    from ..numpygen import noisegen as ng
+else:
+    from numpygen import colorscale #type:ignore
+    from numpygen import noisegen as ng
 
 if __name__ == "__main__":
     ##### First, choose the type of noise #######################################

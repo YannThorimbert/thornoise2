@@ -6,7 +6,6 @@ Since it aims at performance, the code is more complex that strictly necessary f
 understanding the noise. One should use the pure python version if the performance
 is not crucial.
 """
-from typing import Tuple
 from functools import lru_cache
 import numpy as np
 
@@ -104,7 +103,7 @@ class Cache:
     def __init__(self):
         #Scale parameters (impact on fractal behaviour)
         self.DEPTH = 7#number of levels (number of scales)
-        self.H_DIVIDER = 2. #height divider (~"1/persistance" in Perlin's nomenclature)
+        self.H_DIVIDER = 2. #height divider (~"1/persistence" in Perlin's nomenclature)
         self.DOM_DIVIDER = 2 #domain divider (~"lacunarity" in Perlin's nomenclature)
         self.MIN_N = 1
         self.S = 512 #chunk size
@@ -116,7 +115,7 @@ class Cache:
         self.X = None
         self.Y = None
         #
-        self.WORLD_SIZE = (1,1) #in chunk units
+        self.WORLD_SIDE_CHUNKS = (1,1) #in chunk units
         #
         self.max_h = None #maximum height or depth (goes both above and below 0)
         self.SEED = 0
@@ -140,14 +139,14 @@ class Cache:
 
 
 
-    @lru_cache(maxsize=None)  # maxsize=None means "cache all outputs"
     def compute_max_h(self):
         """This is the maximum possible deviation above AND below zero."""
         return sum([1./self.H_DIVIDER**i for i in range(self.DEPTH)])
     
     
     def theoretical_normalize(self, hmap):
-        H = self.compute_max_h() #this means that min height is -H and max height is + H
+        # H = self.compute_max_h() #this means that min height is -H and max height is + H
+        H = self.max_h
         #Hence, 0 <= (hmap + H) <= 2H, so :
         return (hmap + H) / (2 * H)
     
@@ -300,7 +299,7 @@ def get_seeded_conditions_d2m1n3(truechunk, k, c):
     # print((c.SEED, cx,cy,n,0))
     np.random.seed((c.SEED, cx,cy,n,0)) #bulk
     tabh = RandArray(h,n+1)
-    _set_seeded_condition(c.SEED,cx,cy,tabh,n,h,1,c.WORLD_SIZE)
+    _set_seeded_condition(c.SEED,cx,cy,tabh,n,h,1,c.WORLD_SIDE_CHUNKS)
     return tabh
 
 
@@ -319,10 +318,10 @@ def get_seeded_conditions(truechunk, k, c):
     l,t = truechunk
     np.random.seed([l,t,n,0]) #bulk
     tabh,tabf,tabg = RandArray(h,n+1),RandArray(p,n+1),RandArray(p,n+1)
-    _set_seeded_condition(c.SEED, l,t,tabh,n,h,1,c.WORLD_SIZE)
+    _set_seeded_condition(c.SEED, l,t,tabh,n,h,1,c.WORLD_SIDE_CHUNKS)
     return tabh, tabf, tabg
 
-def generate_terrain(chunk:Tuple[int,int], c:NoiseCache)->np.ndarray:
+def generate_terrain(chunk:tuple[int,int], c:NoiseCache)->np.ndarray:
     """Returns an array of heigth values using <chunk> as seed and <p> as parameters.
     """
     hmap = np.zeros((c.S,c.S))
@@ -334,7 +333,7 @@ def generate_terrain(chunk:Tuple[int,int], c:NoiseCache)->np.ndarray:
                 pol.fill_array(hmap, c, k, x, y)
     return hmap
 
-def generate_terrain_d2m1n3(chunk:Tuple[int,int], c:NoiseCache)->np.ndarray:
+def generate_terrain_d2m1n3(chunk:tuple[int,int], c:NoiseCache)->np.ndarray:
     """Returns an array of heigth values using <chunk> as seed and <p> as parameters.
     Very slightly faster than generate_terrain when called many times a frame.
     """
@@ -347,7 +346,7 @@ def generate_terrain_d2m1n3(chunk:Tuple[int,int], c:NoiseCache)->np.ndarray:
                 pol.fill_array(hmap, c, k, x, y)
     return hmap
 
-def generate_rect_terrain(chunk:Tuple[int,int], c:NoiseCache, width:int, height:int)->np.ndarray:
+def generate_rect_terrain(chunk:tuple[int,int], c:NoiseCache, width:int, height:int)->np.ndarray:
     hmap = np.zeros((int(c.S*width),int(c.S*height)))
     for k in c.LEVELS:
         h,f,g = get_seeded_conditions(chunk, k, c)

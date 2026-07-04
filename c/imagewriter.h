@@ -140,7 +140,7 @@ void writeToBmp(T **terrain)
 
    char fn[50];
    strcpy( fn, "result.bmp" );
-   f = fopen(fn, "w");
+   f = fopen(fn, "wb");
 
    fwrite(bmpfileheader, 1, 14,f);
    fwrite(bmpinfoheader, 1, 40,f);

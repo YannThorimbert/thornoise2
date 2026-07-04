@@ -13,7 +13,7 @@ import numpy as np
 
 ###Scale paramters (impact on fractal behaviour)
 ##DEPTH = 6 #number of scales ("octaves" in Perlin's nomenclature)
-##H_DIVIDER = 2. #height divider (~"1/persistance" in Perlin's nomenclature)
+##H_DIVIDER = 2. #height divider (~"1/persistence" in Perlin's nomenclature)
 ##H_DIVIDER_0 = 1. #initial height value (at max level)
 ##DOM_DIVIDER = 2. #domain divider (~"lacunarity" in Perlin's nomenclature)
 ##DOM_DIVIDER_0 = 1. #initial domain divider value
@@ -329,7 +329,7 @@ class Cache:
     def __init__(self):
         #Scale parameters (impact on fractal behaviour)
         self.DEPTH = 7#number of levels (number of scales)
-        self.H_DIVIDER = 2. #height divider (~"1/persistance" in Perlin's nomenclature)
+        self.H_DIVIDER = 2. #height divider (~"1/persistence" in Perlin's nomenclature)
         self.DOM_DIVIDER = 2 #domain divider (~"lacunarity" in Perlin's nomenclature)
         self.MIN_N = 1
         self.S = 512 #chunk size
@@ -365,7 +365,7 @@ class Cache:
 
 
 
-    @lru_cache(maxsize=None)  # maxsize=None means "cache all outputs"
+    # @lru_cache(maxsize=None)  # maxsize=None means "cache all outputs"
     def compute_max_h(self):
         """This is the maximum possible deviation above AND below zero."""
         return sum([1./self.H_DIVIDER**i for i in range(self.DEPTH)])
